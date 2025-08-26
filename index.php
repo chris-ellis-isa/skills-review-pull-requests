@@ -20,6 +20,19 @@ try {
      throw new \PDOException($e->getMessage(), (int)$e->getCode());
 }
 
-$stmt = $pdo->prepare("SELECT * FROM sometable WHERE id = $var");
+$sql = "SELECT DISTINCT employees.empID,
+                            employees.surname                                AS empSurname,
+                            employees.given                                  AS empGiven,
+                            CONCAT(employees.surname, ', ', employees.given) AS employee_name
+            FROM   employees
+                   INNER JOIN mpf_contracts
+                           ON employees.empID = mpf_contracts.empID
+            WHERE  employees.empID NOT IN (SELECT empID
+                                           FROM   eofy_payroll_link
+                                           WHERE  active = 1)
+            ORDER  BY empSurname,
+                      empGiven";
+
+$stmt = $con->prepare($sql);
 $stmt->execute();
-$user = $stmt->fetch();
+$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
